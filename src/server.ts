@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import { Request, Response } from 'express';
 
 (async () => {
 
@@ -28,23 +29,23 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
 
   function validateURL(pURL: string) {
-    var regexQuery = "^(https?://)?(www\\.)?([-a-z0-9]{1,63}\\.)*?[a-z0-9][-a-z0-9]{0,61}[a-z0-9]\\.[a-z]{2,6}(/[-\\w@\\+\\.~#\\?&/=%]*)?$";
-    var url = new RegExp(regexQuery,"i");
+    let regexQuery = "^(https?://)?(www\\.)?([-a-z0-9]{1,63}\\.)*?[a-z0-9][-a-z0-9]{0,61}[a-z0-9]\\.[a-z]{2,6}(/[-\\w@\\+\\.~#\\?&/=%]*)?$";
+    let url = new RegExp(regexQuery,"i");
     return url.test(pURL);
   }
 
-  app.get( "/filteredimage", async ( req, res ) => {
+  app.get( "/filteredimage", async ( request: Request, response: Response ) => {
 
     // 1. validate the image_url query
 
-    var image_url = req.query.image_url;
-    var is_image_url_valid = validateURL(image_url);
+    let image_url = request.query.image_url;
+    let is_image_url_valid = validateURL(image_url);
 
     if(is_image_url_valid){
       // 2. call filterImageFromURL(image_url) to filter the image
-      var image_path = await filterImageFromURL(image_url);
+      let image_path = await filterImageFromURL(image_url);
 
-      var options = {
+      let options = {
         dotfiles: 'deny',
         headers: {
           'x-timestamp': Date.now(),
@@ -52,9 +53,9 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
         }
       };
       // 3. send the resulting file in the response
-      res.sendFile(image_path, options, function (err) {
+      response.sendFile(image_path, options, function (err) {
         if (err) {
-          res.status(400).send('Image could not be accessed')
+          response.status(400).send('Image could not be accessed')
         } else {
           // 4. deletes any files on the server on finish of the response
           deleteLocalFiles([image_path]);
@@ -63,7 +64,7 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
     }
     else {
-      res.status(404).send('URL for the image was not found')
+      response.status(404).send('URL for the image was not found')
     }
   });
 
@@ -73,8 +74,8 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/", async ( req, res ) => {
-    res.send("try GET /filteredimage?image_url={{}}")
+  app.get( "/", async ( request: Request, response: Response ) => {
+    response.send("try GET /filteredimage?image_url={{}}")
   } );
   
 
